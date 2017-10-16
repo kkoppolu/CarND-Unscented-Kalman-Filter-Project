@@ -48,7 +48,6 @@ UKF::UKF()
 
   Xsig_pred_ = MatrixXd(n_x_, (2 * n_aug_) + 1);
   Xsig_pred_.fill(0.0);
-  std::cout << "UKF construction complete" << std::endl;
 }
 
 UKF::~UKF() {}
@@ -76,7 +75,6 @@ void UKF::initFilter(const MeasurementPackage &measurement)
   }
 
   is_initialized_ = true;
-  std::cout << "Filter initialization complete" << std::endl;
 }
 
 /**
@@ -113,7 +111,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
  */
 void UKF::Prediction(double delta_t)
 {
-  std::cout << "Prediction start" << std::endl;
   // generate sigma points
   MatrixXd Xsig_aug;
   augmentSigmaPoints(Xsig_aug);
@@ -210,7 +207,6 @@ void UKF::sigmaPointPrediction(const MatrixXd &Xsig_aug, double delta_t)
 
 void UKF::predictMeanAndCovariance()
 {
-  std::cout << "Prediction mean and co-variance start" << std::endl;
   //predicted state mean
   x_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
@@ -239,7 +235,6 @@ void UKF::predictMeanAndCovariance()
  */
 void UKF::UpdateLidar(MeasurementPackage meas_package)
 {
-  std::cout << "update LIDAR start" << std::endl;
   //set measurement dimension, LIDAR can meqasure px and py
   int n_z = 2;
   VectorXd z_pred(n_z);
@@ -326,7 +321,6 @@ void UKF::predictLidarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
 
 void UKF::predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
 {
-  std::cout << "Predict RADAR points start" << std::endl;
   //transform sigma points into measurement space
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
   { 
@@ -376,7 +370,6 @@ void UKF::predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
  */
 void UKF::UpdateRadar(MeasurementPackage meas_package)
 {
-  std::cout << "Update RADAR start" << std::endl;
   //set measurement dimension, radar can measure r, phi, and r_dot
   int n_z = 3;
   VectorXd z_pred(n_z);
