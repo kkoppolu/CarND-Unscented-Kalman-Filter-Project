@@ -277,7 +277,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
 
-  std::cout << "Update LIDAR end" << std::endl;
+  double nis = z_diff.transpose() * S.inverse() * z_diff;
+  nis_lidar_.push_back(nis);
+  std::cout << "Update LIDAR end. NIS" << nis << std::endl;
   /**
   TODO:
 
@@ -290,7 +292,6 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
 
 void UKF::predictLidarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
 {
-  std::cout << "Predict LIDAR point start" << std::endl;
   //transform sigma points into measurement space
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
   { 
@@ -323,8 +324,6 @@ void UKF::predictLidarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
   R << std_laspx_ * std_laspx_, 0,
       0, std_laspy_ * std_laspy_;
   S = S + R;
-
-  std::cout << "Predict LIDAR points end" << std::endl;
 }
 
 void UKF::predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
@@ -371,8 +370,6 @@ void UKF::predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig)
       0, std_radphi_ * std_radphi_, 0,
       0, 0, std_radrd_ * std_radrd_;
   S = S + R;
-
-  std::cout << "Predict RADAR points end" << std::endl;
 }
 
 /**
@@ -422,7 +419,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package)
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
 
-  std::cout << "Update RADAR end" << std::endl;
+  double nis = z_diff.transpose() * S.inverse() * z_diff;
+  nis_radar_.push_back(nis);
+  std::cout << "Update RADAR end, NIS: " << nis << std::endl;
+  
   /**
   TODO:
 
