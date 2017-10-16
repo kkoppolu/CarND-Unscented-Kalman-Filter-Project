@@ -277,9 +277,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
 
-  double nis = z_diff.transpose() * S.inverse() * z_diff;
-  nis_lidar_.push_back(nis);
-  std::cout << "Update LIDAR end. NIS" << nis << std::endl;
+  nis_lidar_ = z_diff.transpose() * S.inverse() * z_diff;
   /**
   TODO:
 
@@ -419,9 +417,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package)
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
 
-  double nis = z_diff.transpose() * S.inverse() * z_diff;
-  nis_radar_.push_back(nis);
-  std::cout << "Update RADAR end, NIS: " << nis << std::endl;
+  nis_radar_ = z_diff.transpose() * S.inverse() * z_diff;
   
   /**
   TODO:

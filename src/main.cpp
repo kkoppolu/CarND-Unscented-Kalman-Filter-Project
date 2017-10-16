@@ -1,5 +1,7 @@
 #include <uWS/uWS.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "json.hpp"
 #include <math.h>
 #include "ukf.h"
@@ -7,6 +9,10 @@
 
 using namespace std;
 
+namespace {
+  char LidarFile[] = "nis_lidar_file.txt";
+  char RadarFile[] = "nis_radar_file.txt";
+}
 // for convenience
 using json = nlohmann::json;
 
@@ -32,13 +38,15 @@ int main()
 
   // Create a Kalman Filter instance
   UKF ukf;
+  std::ofstream nis_lidar_file;
+  std::ofstream nis_radar_file;
 
   // used to compute the RMSE later
   Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  h.onMessage([&ukf,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf,&tools,&estimations,&ground_truth, &nis_radar_file, &nis_lidar_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -139,7 +147,20 @@ int main()
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-	  
+
+          if (sensor_type.compare("L") == 0) {
+            std::stringstream ss;
+            ss << ukf.nis_lidar_;
+            nis_lidar_file.open(LidarFile, std::ofstream::out | std::ofstream::app);
+            nis_lidar_file << ss.str() << std::endl;
+            nis_lidar_file.close();
+          } else {
+            std::stringstream ss;
+            ss << ukf.nis_radar_;
+            nis_radar_file.open(RadarFile, std::ofstream::out | std::ofstream::app);
+            nis_radar_file << ss.str() << std::endl;
+            nis_radar_file.close();
+          }
         }
       } else {
         
