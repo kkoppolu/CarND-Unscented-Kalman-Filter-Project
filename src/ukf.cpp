@@ -15,7 +15,7 @@ double normalizeAngle(double angle)
   {
     angle -= 2 * M_PI;
   }
-  while (angle < M_PI)
+  while (angle < -M_PI)
   {
     angle += 2 * M_PI;
   }
@@ -27,7 +27,7 @@ double normalizeAngle(double angle)
  * Initializes Unscented Kalman filter
  */
 UKF::UKF()
-    : is_initialized_(false), use_laser_(true), use_radar_(true), n_x_(5), n_aug_(n_x_ + 2), lambda_(3 - n_x_), time_us_(0), std_a_(6), std_yawdd_(6), std_laspx_(0.15), std_laspy_(0.15), std_radr_(0.3), std_radphi_(0.03), std_radrd_(0.3)
+    : is_initialized_(false), use_laser_(true), use_radar_(true), n_x_(5), n_aug_(n_x_ + 2), lambda_(3 - n_x_), time_us_(0), std_a_(1), std_yawdd_(6), std_laspx_(0.15), std_laspy_(0.15), std_radr_(0.3), std_radphi_(0.03), std_radrd_(0.3)
 {
   weights_ = VectorXd(2 * n_aug_ + 1);
 
@@ -127,7 +127,6 @@ void UKF::Prediction(double delta_t)
 
 void UKF::augmentSigmaPoints(MatrixXd &Xsig_aug)
 {
-  std::cout << "augmentSigmaPoints start" << std::endl;
   //create augmented mean vector
   VectorXd x_aug = VectorXd(n_aug_);
   //create augmented state covariance
@@ -156,13 +155,10 @@ void UKF::augmentSigmaPoints(MatrixXd &Xsig_aug)
     Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
     Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) * L.col(i);
   }
-  std::cout << "augmentSigmaPoints end" << std::endl;
 }
 
 void UKF::sigmaPointPrediction(const MatrixXd &Xsig_aug, double delta_t)
 {
-
-  std::cout << "sigmaPointPrediction start" << std::endl;
 
   //predict sigma points
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
@@ -210,20 +206,22 @@ void UKF::sigmaPointPrediction(const MatrixXd &Xsig_aug, double delta_t)
     Xsig_pred_(3, i) = yaw_p;
     Xsig_pred_(4, i) = yawd_p;
   }
-  std::cout << "sigmaPointPrediction end" << std::endl;
 }
 
 void UKF::predictMeanAndCovariance()
 {
   std::cout << "Prediction mean and co-variance start" << std::endl;
   //predicted state mean
+  x_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
   {
     //iterate over sigma points
     x_ = x_ + weights_(i) * Xsig_pred_.col(i);
   }
+  x_(3) = ::normalizeAngle(x_(3));
 
   //predicted state covariance matrix
+  P_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
   {
     //iterate over sigma points
@@ -233,7 +231,6 @@ void UKF::predictMeanAndCovariance()
 
     P_ = P_ + weights_(i) * x_diff * x_diff.transpose();
   }
-  std::cout << "Prediction mean and co-variance end" << std::endl;
 }
 
 /**
