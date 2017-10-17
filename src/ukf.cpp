@@ -27,7 +27,7 @@ double normalizeAngle(double angle)
  * Initializes Unscented Kalman filter
  */
 UKF::UKF()
-    : is_initialized_(false), use_laser_(true), use_radar_(true), n_x_(5), n_aug_(n_x_ + 2), lambda_(3 - n_x_), time_us_(0), std_a_(1), std_yawdd_(6), std_laspx_(0.15), std_laspy_(0.15), std_radr_(0.3), std_radphi_(0.03), std_radrd_(0.3)
+    : is_initialized_(false), use_laser_(true), use_radar_(true), n_x_(5), n_aug_(n_x_ + 2), lambda_(3 - n_x_), time_us_(0), std_a_(1), std_yawdd_(3), std_laspx_(0.15), std_laspy_(0.15), std_radr_(0.3), std_radphi_(0.03), std_radrd_(0.3), nis_lidar_(0), nis_radar_(0)
 {
   weights_ = VectorXd(2 * n_aug_ + 1);
 
@@ -64,14 +64,12 @@ void UKF::initFilter(const MeasurementPackage &measurement)
     // derive the initial x and y positions from the polar co-ordinates
     const float rho = measurement.raw_measurements_[0];
     float phi = measurement.raw_measurements_[1];
-    phi = normalizeAngle(phi);
+    // phi = normalizeAngle(phi);
+    const float rho_dot = measurement.raw_measurements_[2];
 
     const double px = rho * cos(phi);
     const double py = rho * sin(phi);
-
-    double si = 0.5 * M_PI - phi;
-    si = normalizeAngle(si);
-    x_ << px, py, rho, si, 0;
+    x_ << px, py, 0, 0, 0;
   }
 
   is_initialized_ = true;

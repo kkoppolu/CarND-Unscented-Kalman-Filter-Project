@@ -10,8 +10,7 @@
 using namespace std;
 
 namespace {
-  char LidarFile[] = "nis_lidar_file.txt";
-  char RadarFile[] = "nis_radar_file.txt";
+  char NisFile[] = "nis_file.txt";
 }
 // for convenience
 using json = nlohmann::json;
@@ -38,15 +37,14 @@ int main()
 
   // Create a Kalman Filter instance
   UKF ukf;
-  std::ofstream nis_lidar_file;
-  std::ofstream nis_radar_file;
+  std::ofstream nis_file;
 
   // used to compute the RMSE later
   Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  h.onMessage([&ukf,&tools,&estimations,&ground_truth, &nis_radar_file, &nis_lidar_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf,&tools,&estimations,&ground_truth, &nis_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -74,11 +72,11 @@ int main()
     	  string sensor_type;
     	  iss >> sensor_type;
 
+        float px;
+        float py;
     	  if (sensor_type.compare("L") == 0) {
       	  		meas_package.sensor_type_ = MeasurementPackage::LASER;
           		meas_package.raw_measurements_ = VectorXd(2);
-          		float px;
-      	  		float py;
           		iss >> px;
           		iss >> py;
           		meas_package.raw_measurements_ << px, py;
@@ -96,9 +94,13 @@ int main()
           		iss >> ro_dot;
           		meas_package.raw_measurements_ << ro,theta, ro_dot;
           		iss >> timestamp;
-          		meas_package.timestamp_ = timestamp;
+              meas_package.timestamp_ = timestamp;
+              
+              px = ro * cos(theta);
+              py = ro * sin(theta);
           }
-          float x_gt;
+
+        float x_gt;
     	  float y_gt;
     	  float vx_gt;
     	  float vy_gt;
@@ -148,19 +150,19 @@ int main()
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 
-          if (sensor_type.compare("L") == 0) {
-            std::stringstream ss;
-            ss << ukf.nis_lidar_;
-            nis_lidar_file.open(LidarFile, std::ofstream::out | std::ofstream::app);
-            nis_lidar_file << ss.str() << std::endl;
-            nis_lidar_file.close();
-          } else {
-            std::stringstream ss;
-            ss << ukf.nis_radar_;
-            nis_radar_file.open(RadarFile, std::ofstream::out | std::ofstream::app);
-            nis_radar_file << ss.str() << std::endl;
-            nis_radar_file.close();
-          }
+          double v_rad = atan2(vy_gt, vx_gt);
+          while (v_rad > M_PI) v_rad -= 2*M_PI;
+          while (v_rad < -M_PI) v_rad += 2*M_PI;
+          
+          std::stringstream ss;
+          ss << p_x << "," << p_y << "," << v << "," << yaw << "," << ukf.x_(4) << ","
+          << px << "," << py << "," 
+          << x_gt << "," << y_gt << "," << sqrt(vx_gt*vx_gt + vy_gt*vy_gt) << "," << v_rad << "," << 0 << "," << vx_gt << "," << vy_gt << ","
+          << ukf.nis_lidar_ << "," << ukf.nis_radar_ << std::endl;
+
+          nis_file.open(NisFile, std::ofstream::out | std::ofstream::app);
+          nis_file << ss.str();
+          nis_file.close();
         }
       } else {
         
