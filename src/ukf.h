@@ -1,18 +1,17 @@
 #ifndef UKF_H
 #define UKF_H
 
-#include "measurement_package.h"
-#include "Eigen/Dense"
-#include <vector>
-#include <string>
 #include <fstream>
+#include <string>
+#include <vector>
+#include "Eigen/Dense"
+#include "measurement_package.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-class UKF
-{
-public:
+class UKF {
+ public:
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
 
@@ -67,8 +66,10 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* The latest NIS value for LIDAR
   double nis_lidar_;
 
+  ///* The latest NIS value for RADAR
   double nis_radar_;
 
   /**
@@ -106,14 +107,46 @@ public:
    */
   void UpdateRadar(MeasurementPackage meas_package);
 
-private:
-  void initFilter(const MeasurementPackage& measurement);
+ private:
+  /**
+   * Initializes the filter with the first measurement
+   */
+  void initFilter(const MeasurementPackage &measurement);
+
+  /**
+   * Generate augmented sigma points
+   * @param Xsig_aug - (out) Matrix to store augmented sigma points in
+   */
   void augmentSigmaPoints(MatrixXd &Xsig_aug);
+
+  /**
+   * Predict the state for the given sigma points
+   * @param Xsig_aug - Sigma points to predict
+   * @param delta_t - TIme step
+   */
   void sigmaPointPrediction(const MatrixXd &Xsig_aug, double delta_t);
+
+  /**
+   * Predict the mean and co-variance of the state from the predicted state
+   * points
+   */
   void predictMeanAndCovariance();
 
-  void predictLidarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig);
-  void predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd& Zsig);
+  /**
+   * Transform the sigma points into the LIDAR measurement space
+   * @param z_pred - (out) Predicted LIDAR measurements
+   * @param S - Predicted co-variance matrix
+   * @param Zsig - Predicted sigma points in measurement space
+   */
+  void predictLidarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig);
+
+  /**
+   * Transform the sigma points into the RADAR measurement space
+   * @param z_pred - (out) Predicted RADAR measurements
+   * @param S - Predicted co-variance matrix
+   * @param Zsig - Predicted sigma points in measurement space
+   */
+  void predictRadarSigmaPoints(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig);
 };
 
 #endif /* UKF_H */
